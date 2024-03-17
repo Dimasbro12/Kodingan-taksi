@@ -1,0 +1,612 @@
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <unordered_set>
+#include <cctype>
+#include <cmath>
+#include <queue>
+using namespace std;
+
+struct DriverData {
+    string Nama;
+    string Id;
+    string lahir;
+    char kelamin;
+    string Address;
+    DriverData* prev;
+    DriverData* next;
+};
+
+struct OrderData {
+    string Id;
+    string nama;
+    string supir;
+    string tujuan;
+    string plat;
+    OrderData* lanjut;
+    OrderData* sebelum;
+};
+struct DataMobil {
+    string Plat;
+    string Jenis;
+    string Brand;
+    DataMobil* berlanjut;
+};
+
+DriverData* head, *cur, *tail, *NewNode, *del;
+DriverData Supir; // Instance of DriverData structure
+OrderData* kepala, *letak, *ekor, *baru, *hapus;
+OrderData Penumpang;
+DataMobil* awal, *sesuai, *akhir, *terbaru, *buang;
+DataMobil Mobil;
+queue<OrderData*> orderQueue;
+string buatIDBaru(string Nama, char kelamin, string lahir, unordered_set<string>& duplikasiID) {
+    int digitDuaPertama = abs((tolower(Nama[0]) - 'a' + 1) - (tolower(Nama[Nama.length() - 1]) - 'a' + 1));
+    int digitKetiga = (kelamin == 'L') ? 1 : 0;
+    int digitKeempat = ((lahir[1] - '0') + (lahir[4] - '0') + (lahir[9] - '0')) % 9;
+
+    int digitKelima = 0;
+    string hasilID;
+
+    do {
+        hasilID = to_string(digitDuaPertama) +
+            to_string(digitKetiga) +
+            to_string(digitKeempat) +
+            to_string(digitKelima);
+
+        // Menambahkan leading zero jika jumlah digit kurang dari 5
+        if (hasilID.length() < 5) {
+            hasilID = string(5 - hasilID.length(), '0') + hasilID;
+        }
+
+        digitKelima++;
+
+        if (digitKelima > 99) {
+            cerr << "Error: Infinite loop detected. Unable to generate a unique ID." << endl;
+            exit(EXIT_FAILURE);
+        }
+
+    } while (duplikasiID.find(hasilID) != duplikasiID.end());
+
+    duplikasiID.insert(hasilID);
+
+    // Pindahkan cout ke sini agar ID ditampilkan dengan benar
+    cout << "ID SUPIR   : " << hasilID << endl;
+
+    return hasilID;
+}
+void MenambahData(string Nama, char kelamin, string lahir, string Address) {
+    unordered_set<string> duplikasiID;
+    if (head == nullptr) {
+        head = new DriverData();
+        head->Nama = Nama;
+        head->kelamin = kelamin;
+        head->Address = Address;
+        cin.ignore();
+        head->lahir = lahir;
+        string UserID = buatIDBaru(Nama, kelamin, Supir.lahir, duplikasiID);
+        cout << UserID;
+        head->Id = UserID;
+        head->next = head;
+        head->prev = head;
+        tail = head;
+    }
+    else {
+        NewNode = new DriverData();
+        NewNode->Nama = Nama;
+        NewNode->kelamin = kelamin;
+        NewNode->Address = Address;
+        cin.ignore();
+        NewNode->lahir = lahir;
+        string UserID = buatIDBaru(Nama, kelamin, Supir.lahir, duplikasiID);
+        cout << UserID;
+        NewNode->Id = UserID;
+        NewNode->next = head;
+        NewNode->prev = tail;
+        tail->next = NewNode;
+        tail = NewNode;
+        head->prev = tail;
+    }
+}
+void MenambahDataMobil(string plat, string jenis , string brand){
+        if (head == nullptr) {
+        awal = new DataMobil();
+        awal->Plat = plat;
+        awal->Jenis = jenis;
+        cin.ignore();
+        cout << "Data berhasil dimasukkan!!!" << "\n";
+    }
+    else {
+        terbaru = new DataMobil();
+        terbaru->Plat = plat;
+        terbaru->Jenis = jenis;
+        cin.ignore();
+        cout << "Data berhasil dimasukkan!!!" << "\n";
+        terbaru->berlanjut = awal;
+        awal = terbaru;
+    }
+
+}
+void MenghapusDataMobil(){
+    if (awal == nullptr){
+        cout << "Mobil digudang lagi kosong nih" << "\n";
+    }
+    buang = awal;
+    awal = awal->berlanjut ;
+    delete buang;
+}
+string MengembalikanPlat(){
+    sesuai = awal;
+    while(sesuai != nullptr){
+         string plat;
+         plat =sesuai->Plat ;
+         return plat;
+    }
+    MenghapusDataMobil();
+}
+
+string MengembalikanIdSupir(){
+cur = head;
+while (cur != nullptr){
+    string id;
+    id = cur->Id;
+    return id;
+    if(cur->next != nullptr){
+        cur = cur->next;
+
+    }
+}
+}
+string MengembalikanSupir(){
+cur = head;
+while (cur != nullptr){
+    string nama;
+    nama = cur->Nama;
+    return nama;
+    if(cur->next != nullptr){
+        cur = cur->next;
+
+    }
+}
+}
+void MencariData() {
+    cur = head;
+    int pilihan; // Initialize to a default value
+
+    while (cur != nullptr) {
+        cout << "|--------------------------------" << "\n";
+        cout << "Nama\t:" << cur->Nama << "\n";
+        cout << "Id\t:" << cur->Id << "\n";
+        cout << "Tgl Lahir\t:" << cur->lahir << "\n";
+        cout << "Kelamin\t:" << cur->kelamin << "\n";
+        cout << "Alamat\t:" << cur->Address << "\n";
+        cout << "Masukkan Pilihan, apakah lanjut ke node selanjutnya? (ya = 1/ Previous = 0 / Kembali = 2)" << "\n";
+        cout << ">";
+
+        cin >> pilihan;  // Capture user input
+
+        if (pilihan == 1) {
+            if (cur->next != nullptr) {
+                cur = cur->next;
+            }
+            else {
+                cout << "Tidak ada node selanjutnya." << "\n";
+            }
+        }
+        else if (pilihan == 0) {
+            if (cur->prev != nullptr) {
+                cur = cur->prev;
+            }
+            else {
+                cout << "Tidak ada node sebelumnya." << "\n";
+            }
+        }
+        else if (pilihan == 2) {
+            return;
+        }
+        else {
+            cout << "Pilihan tidak valid!" << "\n";
+        }
+    }
+
+    cout << "Data Masih Kosong" << "\n";
+}
+
+void MengubahData() {
+    cout << "Masukkan Id yang ingin diubah!!" << "\n";
+    string targetId;
+    cout << "<";
+    cin >> targetId;
+
+    cur = head;
+    bool found = false;
+
+    while (cur != nullptr) {
+        if (cur->Id == targetId) {
+            // Perform modifications here, for example:
+            cout << "Data ditemukan. Masukkan perubahan data:" << "\n";
+            // You can modify other fields as needed
+            cout << "Nama\t:";
+            cin >> cur->Nama;
+
+            cout << "Masukkan Jenis Kelamin\t:";
+            cin >> cur->kelamin;
+
+            cout << "Masukkan Kelahiran (tanggal bulan tahun): ";
+            cin >> cur->lahir;
+
+            cout << "Masukkan Alamat\t:";
+            cin.ignore(); // Clear the input buffer
+            getline(cin, cur->Address);
+
+            cout << "Data berhasil diubah!" << "\n";
+            found = true;
+            break; // Exit the loop once the data is found and modified
+        }
+        cur = cur->next;
+    }
+
+    if (!found) {
+        cout << "Data dengan ID " << targetId << " tidak ditemukan." << "\n";
+    }
+
+    // Prompt to go back to the dashboard
+    char kembali;
+    cout << "Kembali ke Dashboard Admin? (y/n): ";
+    cin >> kembali;
+
+    if (tolower(kembali) == 'y') {
+        // Call DashboardAdmin to go back to the admin dashboard
+        return;
+    }
+    // If the user enters 'n', you can simply return from the function
+}
+
+void MenghapusData() {
+    cout << "Masukkan Id yang ingin dihapus!!" << "\n";
+    string targetId;
+    cout << "<";
+    cin >> targetId;
+
+    cur = head;
+    bool found = false;
+
+    while (cur != nullptr) {
+        if (cur->Id == targetId) {
+            del = cur;
+            if (cur->prev != nullptr) {
+                cur->prev->next = cur->next;
+            }
+            else {
+                head = cur->next;
+            }
+            if (cur->next != nullptr) {
+                cur->next->prev = cur->prev;
+            }
+            else {
+                tail = cur->prev;
+            }
+            delete del;
+            found = true;
+            break;
+        }
+        cur = cur->next;
+    }
+
+    if (!found) {
+        cout << "Data dengan ID " << targetId << " tidak ditemukan." << "\n";
+    }
+
+    // Prompt to go back to the dashboard
+    char kembali;
+    cout << "Kembali ke Dashboard Admin? (y/n): ";
+    cin >> kembali;
+
+    if (tolower(kembali) == 'y') {
+        // Call DashboardAdmin to go back to the admin dashboard
+        return;
+    }
+    // If the user enters 'n', you can simply return from the function
+}
+
+string buatIDOrder(string platNomor, string idSupir, string tujuan, string namaPelanggan) {
+    int urutanAlphabet = tolower(platNomor[0]) - 'a' + 1;
+    int digitIDSupir = stoi(idSupir) % 100000;  // Ambil semua 5 digit dari ID Supir!
+    int urutanTujuan = 0;
+
+    if (tujuan.length() >= 2) {
+        char lastChar1 = tolower(tujuan[tujuan.length() - 2]);
+        char lastChar2 = tolower(tujuan[tujuan.length() - 1]);
+        urutanTujuan = (lastChar1 - 'a' + 1) + (lastChar2 - 'a' + 1);
+    } else {
+        cerr << "Error: MINIMAL HARUS 2 CHAR PADA DESTINASI TUJUAN!" << endl; // buat test
+        exit(EXIT_FAILURE);
+    }
+
+    int jumlahHurufNama = 0;
+    for (char huruf : namaPelanggan) {
+        if (isalpha(huruf)) {
+            jumlahHurufNama += tolower(huruf) - 'a' + 1;
+        }
+    }
+
+    int digitTerakhir = jumlahHurufNama % 10;
+
+    // Format ID order
+    return to_string(urutanAlphabet) +
+           // Pad digitIDSupir with leading zeros to make it a 5-digit number
+           to_string(digitIDSupir / 10000) +
+           to_string(digitIDSupir % 10000) +
+           to_string(urutanTujuan) +
+           to_string(digitTerakhir);
+}
+
+void MenambahDataOrder(string nama, string tujuan, string plat) {
+    if (kepala == nullptr){
+        kepala = new OrderData();
+        kepala->nama = nama;
+        kepala->tujuan = tujuan;
+        string PLAT = MengembalikanPlat();
+        kepala->plat = PLAT;
+        cin.ignore();
+        string SupirID = MengembalikanIdSupir();
+        string OrderID = buatIDOrder(PLAT, SupirID, tujuan, nama );
+        kepala->Id = OrderID;
+        cout << "\n" << "Order ID: " << OrderID;
+        kepala->lanjut = nullptr;
+        kepala->sebelum = nullptr;
+    }
+    else {
+        baru = new OrderData();
+        baru->nama = nama;
+        baru->tujuan = tujuan;
+        string PLAT = MengembalikanPlat();
+        kepala->plat = PLAT;
+        cin.ignore();
+        string SupirID = MengembalikanIdSupir();
+        string OrderID = buatIDOrder(PLAT, SupirID, tujuan, nama );
+        baru->Id = OrderID;
+        cout << "\n" << "Order Id:" ;
+        cout << OrderID;
+        kepala->lanjut = baru;
+        baru->sebelum = kepala;
+        baru->lanjut = nullptr;
+    }
+}
+
+void MencariDataOrder(){
+    letak = kepala;
+    char pilihan = '1';
+    while(cur != nullptr){
+    cout << "|----------------------------------------------" << "\n";
+    cout << "Nama" << letak->nama << "\n";
+    string supir = MengembalikanSupir();
+    cout << "Nama Supir: " << supir << "\n";
+    cout << "Plat Nomor: " << letak->plat << "\n";
+    cout << "Tujuan: " << letak->tujuan << "\n";
+    cout << "Apakah ingin melakukan order lagi? (y/n)" << "\n";
+    cin >> pilihan;
+    if (pilihan == 'y'){
+    return;
+    }
+    else if(pilihan == 'n'){
+    break;
+    }
+    else {
+        cout << "Masukkan tidak valid!!!" << "\n";
+    }
+    }}
+
+void MencariDataUser() {
+    cur = head;
+    char pilihan = '1'; // Initialize to a default value
+
+    while (cur != nullptr) {
+        cout << "|--------------------------------" << "\n";
+        cout << "Nama\t:" << cur->Nama << "\n";
+        cout << "Id\t:" << cur->Id << "\n";
+        cout << "Tgl Lahir\t:" << cur->lahir << "\n";
+        cout << "Kelamin\t:" << cur->kelamin << "\n";
+        cout << "Alamat\t:" << cur->Address << "\n";
+        cout << "1. Next" << "\n";
+        cout << "2. Prev" << "\n";
+        cout << "3. Order" << "\n";
+        cout << "4. Exit" << "\n";
+        cout << ">";
+
+        cin >> pilihan;  // Capture user input
+
+        if (pilihan == '1') {
+            if (cur->next != nullptr) {
+                cur = cur->next;
+            } else {
+                cout << "Tidak ada node selanjutnya." << "\n";
+            }
+        } else if (pilihan == '2') {
+            if (cur->prev != nullptr) {
+                cur = cur->prev;
+            } else {
+                cout << "Tidak ada node sebelumnya." << "\n";
+            }
+        } else if (pilihan == '3') {
+            cout << "Masukkan nama pelanggan >";
+            cin.ignore(); // Add this line to clear the input buffer
+            getline(cin, Penumpang.nama);
+            cout << "\n";
+            cout << "Tujuan pelanggan >";
+            getline(cin, Penumpang.tujuan);
+            cout << "\n";
+            string idSupir = MengembalikanIdSupir();
+            cout << "Kamu akan menggunaka n supir dengan Id:" << idSupir ;
+            MenambahDataOrder(Penumpang.nama, Penumpang.tujuan, Penumpang.plat);
+            MencariDataOrder();
+        } else if (pilihan == '4') {
+            cout << "Anda sedang keluar...." << "\n";
+            return;
+        } else {
+            cout << "Pilihan tidak valid!" << "\n";
+        }}}
+void ProsesPemesanan(){
+    int step= 1;
+    letak = kepala;
+    int pilihan;
+    string supir = MengembalikanSupir();
+    while(letak != nullptr ){
+        
+        cout << "---Pesanan Ke-" << step << "---" << "\n";
+        cout << "Id: " << letak->Id << "\n";
+        cout << "Nama: " << letak->nama << "\n";
+        cout << "Supir: " << supir << "\n";
+        cout << "Plat Nomor: " << letak->plat << "\n";
+        cout << "Tujuan: " << letak->tujuan << "\n";
+        step++;
+        cout << "\n";
+        cout << "1.Accept" << "\n";
+        cout << "2.Reject" << "\n";
+        cout << "3.Exit" << "\n";
+        cin >> pilihan;
+        if(pilihan == 1){
+            if(letak != nullptr){
+            cout << "Pesanan dengan Id " << letak->Id << "sedang siproses" << "\n" ;
+              hapus = letak;
+              delete hapus;
+            return;
+        }else {
+            cout << "Tidak ada pesanan" << "\n";   
+        }
+        }
+        if(pilihan == 2){
+            if (letak != nullptr){
+             cout << "Pesanan dengan Id " << letak->Id << "ditolak" << "\n" ;
+               hapus = letak;
+               delete hapus;
+             return;
+            }else {
+            cout << "Tidak ada pesanan" << "\n";
+        }
+        }
+    }
+    cout << "Tidak ada pemesanan yang sedang berlangsung" << "\n";
+    return;
+}
+void DashboardAdmin() {
+    int pilihan;
+    bool keluar = false;
+
+    while (!keluar) {
+    loop:
+        cout << "=================" << "\n";
+        cout << "\n";
+        cout << "1. Mencari Data Supir" << "\n";
+        cout << "2. Menghapus Data Supir" << "\n";
+        cout << "3. Mengubah Data Supir" << "\n";
+        cout << "4. Menambah Data Supir" << "\n";
+        cout << "5. Proses Pemesanan" << "\n";
+        cout << "6. Tambah Unit Mobil" << "\n";    
+        cout << "0. Kembali ke Menu Utama" << "\n";
+        cout << ">";
+        cin >> pilihan;
+        cin.ignore(); // Clear the input buffer
+
+        if (pilihan == 1) {
+            MencariData();
+        }
+        else if (pilihan == 2) {
+            MenghapusData();
+        }
+        else if (pilihan == 3) {
+            MengubahData();
+        }
+        else if (pilihan == 4) {
+            cout << "Proses Integrate Id" << "\n";
+            cout << "Nama\t:";
+
+            getline(cin, Supir.Nama);
+
+            cout << "Masukkan Jenis Kelamin\t:";
+            cin >> Supir.kelamin;
+
+            cout << "Masukkan Kelahiran (tanggal-bulan-tahun): ";
+            cin >> Supir.lahir;
+            cin.ignore(); // Clear the input buffer
+            cout << "Masukkan Alamat\t:";
+            getline(cin, Supir.Address);
+
+            MenambahData(Supir.Nama, Supir.kelamin, Supir.lahir, Supir.Address);
+        }
+        else if (pilihan == 5){
+            ProsesPemesanan();
+        }
+        else if (pilihan == 6){
+            cout << "Masukkan plat nomor mobil\t:";
+
+            getline(cin, Mobil.Plat);
+
+            cout << "Masukkan Jenis mobil\t:";
+            getline(cin, Mobil.Jenis);
+
+            cout << "Masukkan Brand mobil\t: ";
+            getline(cin, Mobil.Brand);
+            cin.ignore(); // Clear the input buffer
+            MenambahDataMobil(Mobil.Plat,Mobil.Jenis,Mobil.Brand);
+        }
+        else if (pilihan == 0) {
+            int pilihan;
+            cout << "================" << "\n";
+            cout << "Selamat Datang!!" << "\n";
+            cout << "================" << "\n";
+            cout << "1. Masuk Sebagai Admin" << "\n";
+            cout << "2. Masuk Sebagai User" << "\n";
+            cout << "0. Exit" << "\n";
+            cout << ">";
+            cin >> pilihan;
+            cin.ignore(); // Clear the input buffer
+
+            if (pilihan == 1) {
+                goto loop;
+            }
+            else if (pilihan == 2) {
+                MencariDataUser();
+            }
+            else if (pilihan == 0) {
+                // Keluar dari aplikasi
+                exit(0);
+            }
+            else {
+                cout << "Pilihan tidak valid!" << endl;
+            }
+        }
+        else {
+            cout << "Pilihan tidak valid!" << endl;
+        }
+    }
+}
+
+int main() {
+    int pilihan;
+    cout << "================" << "\n";
+    cout << "Selamat Datang!!" << "\n";
+    cout << "================" << "\n";
+    cout << "1. Masuk Sebagai Admin" << "\n";
+    cout << "2. Masuk Sebagai User" << "\n";
+    cout << "0. Exit" << "\n";
+    cout << ">";
+    cin >> pilihan;
+    cin.ignore(); // Clear the input buffer
+
+    if (pilihan == 1) {
+        DashboardAdmin();
+    }
+    else if (pilihan == 2) {
+        MencariDataUser();
+    }
+    else if (pilihan == 0) {
+        // Keluar dari aplikasi
+        exit(0);
+    }
+    else {
+        cout << "Pilihan tidak valid!" << endl;
+    }
+
+    return 0;
+}
